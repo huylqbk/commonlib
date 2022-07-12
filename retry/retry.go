@@ -29,7 +29,7 @@ type backoff struct {
 // maxRetry > 0 is limit of retry
 // f is retry function handler
 func RetryHandle(ctx context.Context, base time.Duration, maxRetry uint64, f RetryFunc) error {
-	if base < 0 {
+	if base <= 0 {
 		return errors.New("base is invalid")
 	}
 
