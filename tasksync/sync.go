@@ -1,8 +1,8 @@
-package async
+package tasksync
 
 type SyncFunc func(done chan error)
 
-func SyncParallel(funcs ...SyncFunc) error {
+func RunSync(funcs ...SyncFunc) error {
 	cpt := len(funcs)
 	if cpt == 0 {
 		return nil
