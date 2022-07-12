@@ -21,6 +21,7 @@ type backoff struct {
 	next    BackoffFunc
 	l       sync.Mutex
 	attempt uint64
+	max     uint64
 }
 
 // RetryHandle implement retry mechanism by fibonacci algorithm
@@ -36,7 +37,7 @@ func RetryHandle(ctx context.Context, base time.Duration, maxRetry uint64, f Ret
 	b := &backoff{
 		state: unsafe.Pointer(&state{0, base}),
 	}
-	b.defaultNext()
+	b.next = b.defaultNext()
 	if maxRetry > 0 {
 		b.maxRetry(maxRetry)
 	}
@@ -44,8 +45,8 @@ func RetryHandle(ctx context.Context, base time.Duration, maxRetry uint64, f Ret
 	return do(ctx, b, f)
 }
 
-func (b *backoff) defaultNext() {
-	b.next = BackoffFunc(func() (time.Duration, bool) {
+func (b *backoff) defaultNext() BackoffFunc {
+	return BackoffFunc(func() (time.Duration, bool) {
 		for {
 			curr := atomic.LoadPointer(&b.state)
 			currState := (*state)(curr)
@@ -63,16 +64,16 @@ func (b *backoff) defaultNext() {
 }
 
 func (b *backoff) maxRetry(max uint64) {
+	b.max = max
 	b.next = BackoffFunc(func() (time.Duration, bool) {
 		b.l.Lock()
-		defer b.l.Unlock()
-
-		if b.attempt >= max {
+		if b.attempt >= b.max {
 			return 0, true
 		}
 		b.attempt++
+		b.l.Unlock()
 
-		val, stop := b.next()
+		val, stop := b.defaultNext()()
 		if stop {
 			return 0, true
 		}
