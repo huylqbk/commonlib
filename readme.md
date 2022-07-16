@@ -1,6 +1,6 @@
 ## Commonlib
 
-Commonlib is a Go library that collects common, utility functions for generating use milti-cases
+Commonlib is a Go library that collects common, utility functions for generating use multi-cases
 
 ## Features
 * Async
